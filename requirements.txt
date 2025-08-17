@@ -1,0 +1,49 @@
+# Core ML and Data Processing
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.0
+tensorflow==2.13.0
+torch==2.0.1
+torchvision==0.15.2
+
+# Computer Vision and Image Processing
+opencv-python==4.8.0.74
+mediapipe==0.10.3
+dlib==19.24.2
+face-recognition==1.3.0
+imutils==0.5.4
+
+# Web Framework and API
+flask==2.3.2
+flask-cors==4.3.0
+flask-socketio==5.3.4
+gunicorn==21.2.0
+
+# Real-time Data Processing
+pynput==1.7.6
+keyboard==0.13.5
+mouse==0.7.1
+psutil==5.9.5
+
+# Wearable Data Integration
+requests==2.31.0
+bluetooth-low-energy==0.1.0
+pybluez==0.23
+
+# Data Visualization and Monitoring
+plotly==5.15.0
+dash==2.11.1
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Signal Processing
+scipy==1.11.1
+pywavelets==1.4.1
+
+# Time Series Analysis
+statsmodels==0.14.0
+
+# Configuration and Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+schedule==1.2.0

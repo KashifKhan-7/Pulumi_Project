@@ -1,0 +1,77 @@
+# Fatigue Detection System Configuration
+
+# System Settings
+system:
+  debug: true
+  log_level: "INFO"
+  data_collection_interval: 1.0  # seconds
+  fatigue_threshold: 0.7  # 0-1 scale
+  
+# Typing Analysis
+typing:
+  enabled: true
+  window_size: 30  # seconds
+  features:
+    - keystroke_interval
+    - typing_speed
+    - pause_frequency
+    - error_rate
+    - pressure_variance
+  model_path: "models/typing_fatigue_model.pkl"
+
+# Facial Expression Analysis
+facial:
+  enabled: true
+  camera_index: 0
+  fps: 10
+  features:
+    - eye_aspect_ratio
+    - mouth_aspect_ratio
+    - blink_frequency
+    - yawn_detection
+    - head_pose
+    - micro_expressions
+  model_path: "models/facial_fatigue_model.pkl"
+
+# Wearable Data
+wearable:
+  enabled: true
+  devices:
+    - type: "heart_rate"
+      bluetooth_address: null
+    - type: "accelerometer"
+      bluetooth_address: null
+  features:
+    - heart_rate_variability
+    - activity_level
+    - sleep_quality
+    - stress_indicators
+  model_path: "models/wearable_fatigue_model.pkl"
+
+# Multi-modal Fusion
+fusion:
+  method: "weighted_ensemble"  # options: weighted_ensemble, neural_network, voting
+  weights:
+    typing: 0.3
+    facial: 0.4
+    wearable: 0.3
+  model_path: "models/fusion_model.pkl"
+
+# Web Interface
+web:
+  host: "0.0.0.0"
+  port: 5000
+  real_time_updates: true
+  
+# Data Storage
+storage:
+  database_path: "data/fatigue_data.db"
+  backup_interval: 3600  # seconds
+  retention_days: 30
+
+# Alerts
+alerts:
+  enabled: true
+  email_notifications: false
+  sound_alerts: true
+  break_suggestions: true
