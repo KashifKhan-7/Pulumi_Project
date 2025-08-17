@@ -1,0 +1,649 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Fatigue Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Control Panel -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear-fill"></i>
+                    System Control
+                </h5>
+                <small class="text-muted">Last Update: <span id="last-update">--</span></small>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="status-indicator" id="typing-indicator"></div>
+                                    <small>Typing Analysis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="status-indicator" id="facial-indicator"></div>
+                                    <small>Facial Analysis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="status-indicator" id="wearable-indicator"></div>
+                                    <small>Wearable Data</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <small>Session: <span id="session-duration">--</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button id="start-btn" class="btn btn-success" onclick="startMonitoring()">
+                            <i class="bi bi-play-fill"></i> Start Monitoring
+                        </button>
+                        <button id="stop-btn" class="btn btn-danger" onclick="stopMonitoring()" style="display: none;">
+                            <i class="bi bi-stop-fill"></i> Stop Monitoring
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Overall Fatigue Score -->
+    <div class="col-md-4 mb-4">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="bi bi-speedometer2"></i>
+                    Overall Fatigue
+                </h5>
+                <div id="overall-score" class="h2 fatigue-low">0.0%</div>
+                <span id="fatigue-level" class="badge bg-success fs-6">Low</span>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Confidence: <span id="confidence">0.0%</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Modality Scores -->
+    <div class="col-md-8 mb-4">
+        <div class="card metric-card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    Modality Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <i class="bi bi-keyboard display-6 text-primary"></i>
+                            <h6 class="mt-2">Typing Patterns</h6>
+                            <div id="typing-score" class="h4">0.0%</div>
+                            <div class="progress" style="height: 8px;">
+                                <div id="typing-progress" class="progress-bar bg-primary" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <i class="bi bi-camera-video display-6 text-info"></i>
+                            <h6 class="mt-2">Facial Expression</h6>
+                            <div id="facial-score" class="h4">0.0%</div>
+                            <div class="progress" style="height: 8px;">
+                                <div id="facial-progress" class="progress-bar bg-info" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <i class="bi bi-heart-pulse display-6 text-warning"></i>
+                            <h6 class="mt-2">Wearable Data</h6>
+                            <div id="wearable-score" class="h4">0.0%</div>
+                            <div class="progress" style="height: 8px;">
+                                <div id="wearable-progress" class="progress-bar bg-warning" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Real-time Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i>
+                    Real-time Fatigue Monitoring
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="timeRange" id="range5m" value="5" checked>
+                    <label class="btn btn-outline-primary" for="range5m">5m</label>
+                    
+                    <input type="radio" class="btn-check" name="timeRange" id="range15m" value="15">
+                    <label class="btn btn-outline-primary" for="range15m">15m</label>
+                    
+                    <input type="radio" class="btn-check" name="timeRange" id="range30m" value="30">
+                    <label class="btn btn-outline-primary" for="range30m">30m</label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="fatigueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightbulb"></i>
+                    Recommendations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recommendations">
+                    <div class="text-muted text-center py-4">
+                        <i class="bi bi-hourglass-split display-6"></i>
+                        <p class="mt-2">Start monitoring to get personalized recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Session Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clipboard-data"></i>
+                    Session Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h5" id="avg-fatigue">0.0%</div>
+                            <small class="text-muted">Average Fatigue</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h5" id="max-fatigue">0.0%</div>
+                            <small class="text-muted">Peak Fatigue</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h5" id="total-alerts">0</div>
+                            <small class="text-muted">Total Alerts</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h5" id="data-points">0</div>
+                            <small class="text-muted">Data Points</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportSessionData()">
+                        <i class="bi bi-download"></i>
+                        Export Session Data
+                    </button>
+                    <button class="btn btn-outline-info" onclick="showSessionSummary()">
+                        <i class="bi bi-file-earmark-text"></i>
+                        View Session Summary
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="resetSession()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Reset Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Summary Modal -->
+<div class="modal fade" id="sessionSummaryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Session Summary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="session-summary-content">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportSessionData()">
+                    <i class="bi bi-download"></i>
+                    Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Chart variables
+    let fatigueChart = null;
+    let chartData = {
+        labels: [],
+        datasets: [
+            {
+                label: 'Overall Fatigue',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            },
+            {
+                label: 'Typing',
+                data: [],
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1
+            },
+            {
+                label: 'Facial',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            },
+            {
+                label: 'Wearable',
+                data: [],
+                borderColor: 'rgb(255, 205, 86)',
+                backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                tension: 0.1
+            }
+        ]
+    };
+    
+    // Initialize dashboard
+    function initializePage() {
+        initializeChart();
+        loadSessionStatistics();
+        
+        // Set up time range change handlers
+        document.querySelectorAll('input[name="timeRange"]').forEach(input => {
+            input.addEventListener('change', function() {
+                updateChartTimeRange(parseInt(this.value));
+            });
+        });
+    }
+    
+    function initializeChart() {
+        const ctx = document.getElementById('fatigueChart').getContext('2d');
+        
+        fatigueChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        },
+                        type: 'time',
+                        time: {
+                            parser: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
+                            displayFormats: {
+                                minute: 'HH:mm',
+                                hour: 'HH:mm'
+                            }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Fatigue Level (%)'
+                        },
+                        min: 0,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + (context.parsed.y).toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Override the updateFatigueDisplay function to include chart updates
+    const originalUpdateFatigueDisplay = updateFatigueDisplay;
+    updateFatigueDisplay = function(data) {
+        // Call original function
+        originalUpdateFatigueDisplay(data);
+        
+        // Update progress bars
+        updateProgressBar('typing-progress', data.typing_score);
+        updateProgressBar('facial-progress', data.facial_score);
+        updateProgressBar('wearable-progress', data.wearable_score);
+        
+        // Update chart
+        updateChart(data);
+        
+        // Update session statistics
+        updateSessionStats();
+    };
+    
+    // Override system status update to include modality indicators
+    socket.on('system_status', function(data) {
+        systemStatus = data;
+        updateSystemStatusUI(data.is_active ? 'Active' : 'Inactive', true);
+        
+        // Update modality indicators
+        updateModalityIndicators(data);
+        
+        // Update session duration
+        const durationElement = document.getElementById('session-duration');
+        if (durationElement) {
+            durationElement.textContent = formatDuration(data.session_duration || 0);
+        }
+    });
+    
+    function updateProgressBar(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            const percentage = (value * 100);
+            element.style.width = percentage + '%';
+            
+            // Update color based on fatigue level
+            element.className = 'progress-bar';
+            if (percentage < 30) {
+                element.classList.add('bg-success');
+            } else if (percentage < 60) {
+                element.classList.add('bg-warning');
+            } else {
+                element.classList.add('bg-danger');
+            }
+        }
+    }
+    
+    function updateModalityIndicators(status) {
+        const indicators = {
+            'typing-indicator': status.typing_active,
+            'facial-indicator': status.facial_active,
+            'wearable-indicator': status.wearable_active
+        };
+        
+        Object.entries(indicators).forEach(([id, active]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.className = `status-indicator ${active ? 'status-active' : 'status-inactive'}`;
+            }
+        });
+    }
+    
+    function updateChart(data) {
+        const now = new Date(data.timestamp);
+        const maxDataPoints = 50;
+        
+        // Add new data point
+        chartData.labels.push(now);
+        chartData.datasets[0].data.push(data.overall_score * 100);
+        chartData.datasets[1].data.push(data.typing_score * 100);
+        chartData.datasets[2].data.push(data.facial_score * 100);
+        chartData.datasets[3].data.push(data.wearable_score * 100);
+        
+        // Remove old data points
+        if (chartData.labels.length > maxDataPoints) {
+            chartData.labels.shift();
+            chartData.datasets.forEach(dataset => dataset.data.shift());
+        }
+        
+        // Update chart
+        if (fatigueChart) {
+            fatigueChart.update('none');
+        }
+    }
+    
+    function updateChartTimeRange(minutes) {
+        // This would typically fetch historical data for the specified time range
+        // For now, we'll just update the chart with current data
+        console.log('Updating chart time range to', minutes, 'minutes');
+    }
+    
+    async function updateSessionStats() {
+        try {
+            const response = await apiCall('/session/summary');
+            const summary = response.data;
+            
+            // Update statistics display
+            updateElement('avg-fatigue', (summary.average_fatigue_score * 100).toFixed(1) + '%');
+            updateElement('max-fatigue', (summary.maximum_fatigue_score * 100).toFixed(1) + '%');
+            updateElement('total-alerts', summary.total_alerts);
+            updateElement('data-points', summary.total_measurements);
+            
+        } catch (error) {
+            console.error('Failed to update session stats:', error);
+        }
+    }
+    
+    function updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+    
+    async function loadSessionStatistics() {
+        try {
+            const response = await apiCall('/session/summary');
+            const summary = response.data;
+            
+            if (summary && Object.keys(summary).length > 0) {
+                updateElement('avg-fatigue', (summary.average_fatigue_score * 100).toFixed(1) + '%');
+                updateElement('max-fatigue', (summary.maximum_fatigue_score * 100).toFixed(1) + '%');
+                updateElement('total-alerts', summary.total_alerts);
+                updateElement('data-points', summary.total_measurements);
+            }
+        } catch (error) {
+            console.error('Failed to load session statistics:', error);
+        }
+    }
+    
+    async function showSessionSummary() {
+        try {
+            const response = await apiCall('/session/summary');
+            const summary = response.data;
+            
+            let summaryHtml = '<div class="row">';
+            
+            if (summary && Object.keys(summary).length > 0) {
+                summaryHtml += `
+                    <div class="col-md-6">
+                        <h6>Session Overview</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Duration:</strong> ${formatDuration(summary.session_duration)}</li>
+                            <li><strong>Data Points:</strong> ${summary.total_measurements}</li>
+                            <li><strong>Total Alerts:</strong> ${summary.total_alerts}</li>
+                        </ul>
+                        
+                        <h6>Fatigue Scores</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Average:</strong> ${(summary.average_fatigue_score * 100).toFixed(1)}%</li>
+                            <li><strong>Maximum:</strong> ${(summary.maximum_fatigue_score * 100).toFixed(1)}%</li>
+                            <li><strong>Current:</strong> ${(summary.current_fatigue_score * 100).toFixed(1)}%</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Modality Breakdown</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Typing:</strong> ${(summary.average_typing_score * 100).toFixed(1)}%</li>
+                            <li><strong>Facial:</strong> ${(summary.average_facial_score * 100).toFixed(1)}%</li>
+                            <li><strong>Wearable:</strong> ${(summary.average_wearable_score * 100).toFixed(1)}%</li>
+                        </ul>
+                        
+                        <h6>Alert Breakdown</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Low:</strong> ${summary.alert_breakdown.low}</li>
+                            <li><strong>Medium:</strong> ${summary.alert_breakdown.medium}</li>
+                            <li><strong>High:</strong> ${summary.alert_breakdown.high}</li>
+                            <li><strong>Critical:</strong> ${summary.alert_breakdown.critical}</li>
+                        </ul>
+                    </div>
+                `;
+                
+                if (summary.recommendations && summary.recommendations.length > 0) {
+                    summaryHtml += `
+                        <div class="col-12 mt-3">
+                            <h6>Current Recommendations</h6>
+                            <ul>
+                    `;
+                    summary.recommendations.forEach(rec => {
+                        summaryHtml += `<li>${rec}</li>`;
+                    });
+                    summaryHtml += '</ul></div>';
+                }
+            } else {
+                summaryHtml += `
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-info-circle display-6 text-muted"></i>
+                        <p class="mt-2 text-muted">No session data available yet.</p>
+                        <p class="text-muted">Start monitoring to generate session statistics.</p>
+                    </div>
+                `;
+            }
+            
+            summaryHtml += '</div>';
+            
+            document.getElementById('session-summary-content').innerHTML = summaryHtml;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('sessionSummaryModal'));
+            modal.show();
+            
+        } catch (error) {
+            showToast('Failed to load session summary: ' + error.message, 'danger');
+        }
+    }
+    
+    async function exportSessionData() {
+        try {
+            const response = await apiCall('/session/summary');
+            const summary = response.data;
+            
+            // Create CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Metric,Value\n";
+            
+            if (summary && Object.keys(summary).length > 0) {
+                csvContent += `Session Duration,${formatDuration(summary.session_duration)}\n`;
+                csvContent += `Total Measurements,${summary.total_measurements}\n`;
+                csvContent += `Average Fatigue Score,${(summary.average_fatigue_score * 100).toFixed(1)}%\n`;
+                csvContent += `Maximum Fatigue Score,${(summary.maximum_fatigue_score * 100).toFixed(1)}%\n`;
+                csvContent += `Current Fatigue Score,${(summary.current_fatigue_score * 100).toFixed(1)}%\n`;
+                csvContent += `Average Typing Score,${(summary.average_typing_score * 100).toFixed(1)}%\n`;
+                csvContent += `Average Facial Score,${(summary.average_facial_score * 100).toFixed(1)}%\n`;
+                csvContent += `Average Wearable Score,${(summary.average_wearable_score * 100).toFixed(1)}%\n`;
+                csvContent += `Total Alerts,${summary.total_alerts}\n`;
+                csvContent += `Low Alerts,${summary.alert_breakdown.low}\n`;
+                csvContent += `Medium Alerts,${summary.alert_breakdown.medium}\n`;
+                csvContent += `High Alerts,${summary.alert_breakdown.high}\n`;
+                csvContent += `Critical Alerts,${summary.alert_breakdown.critical}\n`;
+            }
+            
+            // Download file
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `fatigue_session_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Session data exported successfully', 'success');
+            
+        } catch (error) {
+            showToast('Failed to export session data: ' + error.message, 'danger');
+        }
+    }
+    
+    function resetSession() {
+        if (confirm('Are you sure you want to reset the current session? This will clear all current data.')) {
+            // Reset chart data
+            chartData.labels = [];
+            chartData.datasets.forEach(dataset => dataset.data = []);
+            if (fatigueChart) {
+                fatigueChart.update();
+            }
+            
+            // Reset statistics
+            updateElement('avg-fatigue', '0.0%');
+            updateElement('max-fatigue', '0.0%');
+            updateElement('total-alerts', '0');
+            updateElement('data-points', '0');
+            
+            showToast('Session data reset', 'info');
+        }
+    }
+</script>
+{% endblock %}
